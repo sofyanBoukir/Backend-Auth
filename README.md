@@ -3,9 +3,70 @@
 ## Overview
 This API provides authentication-related endpoints for user login, verification, password reset, and logout.
 
+## Installation
+
+### Prerequisites
+- PHP 8+
+- Composer
+- Laravel Framework Installed
+- MySQL database
+
+### Setup
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/sofyanBoukir/Backend-Auth.git
+   cd Backend-Auth
+   ```
+2. Install dependencies:
+   ```sh
+   composer install
+   ```
+3. Copy the environment file and configure the database:
+   ```sh
+   cp .env.example .env
+   ```
+   Update `.env` with your database credentials IMPORTANT
+   
+5. Setup your smtp data IMPORTANT
+   ```sh
+    MAIL_MAILER=smtp
+    MAIL_HOST=smtp.gmail.com
+    MAIL_PORT=465 
+    MAIL_USERNAME=soufianeexample01@example.com
+    MAIL_PASSWORD=************
+    MAIL_FROM_ADDRESS="soufianeexample01@example.com"
+    MAIL_FROM_NAME="SOFYAN"
+   ```
+
+6. Setup your frontend (Example) on `.env`
+    ```
+    FRONTEND_URL=http://localhost:5173
+    ```
+
+7. Generate application key:
+   ```sh
+   php artisan key:generate
+   ```
+8. Run migrations:
+   ```sh
+   php artisan migrate
+   ```
+9. Install and configure JWT authentication:
+   ```sh
+   php artisan vendor:publish --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"
+   ```
+   Generate JWT secret key:
+   ```sh
+   php artisan jwt:secret
+   ```
+10. Start the development server:
+   ```sh
+   php artisan serve
+   ```
+
 ## Base URL
 ```
-{your-api-domain}/auth
+http://localhost:8000/api/auth
 ```
 
 ## Endpoints
@@ -21,16 +82,29 @@ Authenticate a user using email and password.
 **Request Body:**
 ```json
 {
-  "email": "user@example.com",
-  "password": "yourpassword"
+  "email": "test@example.com",
+  "password": "password"
 }
 ```
 
 **Response:**
 ```json
 {
-  "token": "your-jwt-token",
-  "user": { ...user data }
+  "token" : "token gived from server",
+  "userDara": {
+            "id" : 1,
+            "name" : "Test User",
+            "email" : "test@example.com",
+            "email_verified_at" : "2025-01-30T12:02:08.000000Z",
+            "created_at" : "2025-01-30T12:02:09.000000Z",
+            "updated_at" : "2025-01-30T12:02:09.000000Z"
+        }
+}
+```
+Or:
+```json
+{
+    "message" : "Email or password incorrect"
 }
 ```
 
@@ -43,6 +117,8 @@ POST /auth/sendVerificationCode
 ```
 **Description:**
 Sends a verification code to the registered email.
+**Note!:**
+Verification code expires in 2 minutes, you can modify it on line 64 `now()->addMinutes(2)`
 
 **Request Body:**
 ```json
@@ -55,6 +131,12 @@ Sends a verification code to the registered email.
 ```json
 {
   "message": "Verification code sent successfully"
+}
+```
+OR:
+```json
+{
+  "message": "User with this email already exists"
 }
 ```
 
@@ -71,15 +153,24 @@ Verifies the code sent to the user's email.
 **Request Body:**
 ```json
 {
-  "email": "user@example.com",
-  "code": "123456"
+  "email" : "user@example.com",
+  "code" : "123456",
+  "fullName" : "Sofyan bou",
+  "password" : "1234"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "message": "Code verified successfully"
+  "message": "Successfully registred"
+}
+```
+Or:
+```json
+{
+  "message": "Verification code expired or incorrect!"
 }
 ```
 
@@ -103,7 +194,13 @@ Sends a password reset link to the provided email.
 **Response:**
 ```json
 {
-  "message": "Password reset link sent successfully"
+  "message": "Your reset link has been sent to your email"
+}
+```
+Or:
+```json
+{
+  "message": "User with this email does not exist"
 }
 ```
 
@@ -120,16 +217,23 @@ Resets the user's password using the provided token.
 **Request Body:**
 ```json
 {
-  "email": "user@example.com",
-  "token": "reset-token",
-  "new_password": "newpassword"
+  "email" : "user@example.com from the URL",
+  "token" : "reset-token from the URL",
+  "password" : "12345",
+  "password_confirmation" : "12345"
 }
 ```
 
 **Response:**
 ```json
 {
-  "message": "Password reset successfully"
+  "message" : "Password reseted successfully!"
+}
+```
+Or:
+```json
+{
+  "message" : "This password reset token is invalid."
 }
 ```
 
@@ -146,7 +250,7 @@ Logs out the authenticated user.
 **Request Headers:**
 ```json
 {
-  "Authorization": "Bearer your-jwt-token"
+  "Authorization": "Bearer {token}"
 }
 ```
 
@@ -156,14 +260,23 @@ Logs out the authenticated user.
   "message": "User logged out successfully"
 }
 ```
+Or:
+```json
+{
+  "message": "Token Signature could not be verified."
+}
+```
 
 ---
 
 ## Authentication
-- All routes (except login, verification, and password reset) require a valid JWT token.
-- Include the token in the `Authorization` header as `Bearer {token}` for protected routes.
+- Only logout route requires a valid JWT token.
+- Include the token in the `Authorization` header as `Bearer {token}`.
 
 ## Notes
-- Ensure you replace `{your-api-domain}` with the actual API domain.
-- Tokens expire after a certain period; users must re-authenticate when needed.
+- Configure your database credentianls on `.env` file.
+- Configure your smtp credentials on `.env` file.
+- Configure your frontend base-url on `.env` file.
+- Tokens expire after 60 mins a certain period; users must re-authenticate when needed.
+- Configure the token time to live in `config/jwt.php` on `104` line `minutes` if you want.
 
